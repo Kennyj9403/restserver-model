@@ -1,18 +1,22 @@
 import express from'express';
 import cors from 'cors';
 import { router } from '../routes/users.js';
+import { dbConnection } from '../db/config.js';
 
 class Server {
     constructor(){
         this.app = express();
         this.port = process.env.PORT;
         this.usersRouterPath = '/api/users'
-
+        //BD
+        this.dbConnection();
         //Middlewares
         this.middlewares();
         //App routes
-
         this.routes();
+    }
+    async dbConnection(){
+        await dbConnection();
     }
 
     middlewares(){
@@ -21,7 +25,7 @@ class Server {
         //body parser
         this.app.use( express.json() );
         // Public Directory
-        this.app.use( express.static('public') );
+        this.app.use( express.static('public'));
 
     }
 
