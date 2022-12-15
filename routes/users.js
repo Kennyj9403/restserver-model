@@ -9,19 +9,21 @@ import {
 } from '../controllers/users.js';
 import { existingEmail, existingUserById, isValidRole } from '../helpers/db-validators.js';
 import { inputValidator } from '../middlewares/input-validator.js';
+import { validateJWT } from '../middlewares/jwt-validator.js';
+import { hasRole, isAdminRole } from '../middlewares/role-validator.js';
 
-const router = Router();
+const routerUsers = Router();
 
-router.get('/', usersGet);
+routerUsers.get('/', usersGet);
 
-router.put('/:id',[
+routerUsers.put('/:id',[
     check('id', 'Is not a valid ID').isMongoId(),
     check('id').custom( existingUserById ),
     check('role').custom( isValidRole ),
     inputValidator
 ], usersPut);
 
-router.post('/',[
+routerUsers.post('/',[
     check('name', 'The name is mandatory').not().isEmpty(),
     check('password', 'The password is mandatory and more than 6 letters').isLength({ min: 6 }),
     check('mail', 'Invalid mail').isEmail(),
@@ -32,14 +34,17 @@ router.post('/',[
     inputValidator
 ] , usersPost);
 
-router.delete('/:id',[
+routerUsers.delete('/:id',[
+    validateJWT,
+    // isAdminRole,
+    hasRole('ADMIN_ROLE', 'SALES_ROLE'),
     check('id', 'Is not a valid ID').isMongoId(),
     check('id').custom( existingUserById ),
     inputValidator
 ], usersDelete);
 
-router.patch('/', usersPatch);
+routerUsers.patch('/', usersPatch);
 
 export {
-    router
+    routerUsers
 }
