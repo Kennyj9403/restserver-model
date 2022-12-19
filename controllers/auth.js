@@ -2,6 +2,7 @@ import { response } from "express"
 import  bcryptjs  from 'bcryptjs'
 import { gererateJWT } from "../helpers/generate-jwt.js";
 import { User } from '../models/user.js';
+import { googleVerify } from "../helpers/google-verify.js";
 
 const login = async(req, res = response) => {
 
@@ -44,6 +45,56 @@ const login = async(req, res = response) => {
     } 
 }
 
+const googleSingIn = async( req, res = response ) => {
+
+    const { id_token } = req.body;
+
+    try {
+        const { name, img, mail } = await googleVerify( id_token );
+
+        let user = await User.findOne({ mail });
+
+        if( !user ){
+            //create
+
+            const data = {
+                name,
+                mail,
+                password: '123',
+                img,
+                google: true,
+                role: 'USER_ROLE'
+            };
+            user = new User( data );
+            await user.save();
+        }
+        // User status
+        if( !user.status ){
+            return res.status(401).json({
+                msg: 'Blocked user, talk to the administrator'
+            })
+        }
+
+        //JWT
+        const token = await gererateJWT( user.id );
+
+        res.json({
+            token: token,
+            user
+        });
+
+    } catch (err) {
+        res.status(400).json({
+            ok: false,
+            msg: 'Token could not be verified',
+            err
+        })
+    }
+    
+    
+}
+
 export{
-    login
+    login,
+    googleSingIn
 }
